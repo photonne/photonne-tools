@@ -1,0 +1,40 @@
+# Compose para ZimaOS / CasaOS.
+#
+# La UI de ZimaOS NO lee un archivo .env ni sabe construir imágenes, así que
+# aquí va todo con valores literales y usando la imagen publicada en GHCR.
+# (Por eso este compose no usa 'build:' ni '${VARIABLES}' como el principal.)
+#
+# EDITA antes de importar:
+#   1. PHOTONNE_TOOLS_PASS      -> pon tu contraseña.
+#   2. PHOTONNE_TOOLS_ALLOWED_ROOTS y los volúmenes de abajo -> las rutas de tu
+#      ZimaOS que quieras exponer (deben coincidir izquierda y derecha).
+#
+# Si el paquete de GHCR es privado, primero haz login en la consola de ZimaOS:
+#   docker login ghcr.io -u <tu-usuario-github>
+
+services:
+  photonne-tools:
+    image: ghcr.io/photonne/photonne-tools:latest
+    container_name: photonne-tools
+    restart: unless-stopped
+
+    ports:
+      # host:contenedor. Cambia 8765 si ya lo usa otra app.
+      - "8765:8000"
+
+    environment:
+      PHOTONNE_TOOLS_USER: "admin"
+      PHOTONNE_TOOLS_PASS: "changeme"
+      PHOTONNE_TOOLS_ALLOWED_ROOTS: "/DATA"
+      PHOTONNE_TOOLS_DB: "/data-app/photonne-tools.db"
+      PHOTONNE_TOOLS_LOGS: "/data-app/logs"
+
+    volumes:
+      # Persistencia de la app (BD y logs).
+      - /DATA/AppData/photonne-tools:/data-app
+
+      # Rutas del host que la app podrá tocar. Deben coincidir con
+      # PHOTONNE_TOOLS_ALLOWED_ROOTS. Añade/quita líneas según necesites.
+      - /DATA:/DATA
+
+    user: "0:0"

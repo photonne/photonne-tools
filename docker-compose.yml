@@ -1,0 +1,28 @@
+# Docker Compose lee automáticamente el archivo .env del mismo directorio.
+# Copia .env.example (para NAS) o .env.local.example (para Mac) a .env y edítalo.
+
+services:
+  photonne-tools:
+    image: ghcr.io/photonne/photonne-tools:latest
+    build: .
+    container_name: photonne-tools
+    restart: unless-stopped
+
+    ports:
+      - "${BIND_ADDR:-127.0.0.1}:${BIND_PORT:-8765}:8000"
+
+    environment:
+      PHOTONNE_TOOLS_USER: "${PHOTONNE_TOOLS_USER:-admin}"
+      PHOTONNE_TOOLS_PASS: "${PHOTONNE_TOOLS_PASS:?define PHOTONNE_TOOLS_PASS en .env}"
+      PHOTONNE_TOOLS_ALLOWED_ROOTS: "${PHOTONNE_TOOLS_ALLOWED_ROOTS:?define PHOTONNE_TOOLS_ALLOWED_ROOTS en .env}"
+      PHOTONNE_TOOLS_DB: "${PHOTONNE_TOOLS_DB:-/data-app/photonne-tools.db}"
+      PHOTONNE_TOOLS_LOGS: "${PHOTONNE_TOOLS_LOGS:-/data-app/logs}"
+
+    volumes:
+      - ./data:/data-app
+      - ${HOST_PATH_1:-/tmp}:${HOST_PATH_1:-/tmp}
+      - ${HOST_PATH_2:-/tmp}:${HOST_PATH_2:-/tmp}
+      - ${HOST_PATH_3:-/tmp}:${HOST_PATH_3:-/tmp}
+      - ${HOST_PATH_4:-/tmp}:${HOST_PATH_4:-/tmp}
+
+    user: "0:0"

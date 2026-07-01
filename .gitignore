@@ -1,0 +1,26 @@
+# Variables de entorno con credenciales
+.env
+.env.local
+.env.production
+.env.*.local
+
+# Datos persistentes
+data/
+*.db
+*.log
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db

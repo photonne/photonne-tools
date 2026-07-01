@@ -1,0 +1,723 @@
+/* photonne-tools — estética editorial cálida */
+
+:root {
+    --bg: #f4ede0;
+    --bg-card: #faf6ec;
+    --bg-elevated: #ffffff;
+    --ink: #1a1816;
+    --ink-soft: #5c544a;
+    --ink-faded: #9a8f80;
+    --accent: #d4502e;
+    --accent-soft: #f2b399;
+    --accent-warm: #c97a1f;
+    --line: #d8cbb2;
+    --line-soft: #e9dec3;
+    --success: #4a7c3a;
+    --danger: #b8341a;
+    --shadow: 0 1px 0 rgba(26, 24, 22, 0.04), 0 4px 16px rgba(26, 24, 22, 0.06);
+    --shadow-elevated: 0 2px 0 rgba(26, 24, 22, 0.06), 0 12px 32px rgba(26, 24, 22, 0.08);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html, body {
+    height: 100%;
+}
+
+body {
+    font-family: 'Fraunces', Georgia, serif;
+    font-feature-settings: "ss01", "ss02";
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.6;
+    font-size: 17px;
+    background-image:
+        radial-gradient(at 100% 0%, rgba(212, 80, 46, 0.04) 0%, transparent 50%),
+        radial-gradient(at 0% 100%, rgba(201, 122, 31, 0.04) 0%, transparent 50%);
+    background-attachment: fixed;
+}
+
+code, pre, .mono, input, select, .tag, .badge {
+    font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+}
+
+/* Header */
+.hdr {
+    border-bottom: 1px solid var(--line);
+    background: var(--bg);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    backdrop-filter: blur(8px);
+    background-color: rgba(244, 237, 224, 0.92);
+}
+
+.hdr-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 1.5rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 2rem;
+    flex-wrap: wrap;
+}
+
+.logo {
+    font-family: 'Fraunces', serif;
+    font-weight: 800;
+    font-size: 2.25rem;
+    letter-spacing: -0.04em;
+    font-variation-settings: "opsz" 144;
+}
+
+.logo .dot {
+    color: var(--accent);
+}
+
+.tabs {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.tab {
+    background: transparent;
+    border: none;
+    padding: 0.5rem 1rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.875rem;
+    color: var(--ink-soft);
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.15s ease;
+    letter-spacing: 0.02em;
+}
+
+.tab:hover {
+    color: var(--ink);
+    background: var(--bg-card);
+}
+
+.tab.active {
+    color: var(--accent);
+    background: var(--bg-card);
+    box-shadow: inset 0 -2px 0 var(--accent);
+}
+
+/* Main */
+.main {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 2.5rem 2rem 4rem;
+}
+
+.section-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.75rem;
+}
+
+.section-head h2 {
+    font-family: 'Fraunces', serif;
+    font-size: 1.75rem;
+    font-weight: 600;
+    font-variation-settings: "opsz" 36;
+    letter-spacing: -0.02em;
+}
+
+.tab-content { display: none; }
+
+.tab-content.active {
+    display: block;
+    animation: fadeIn 0.25s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Buttons */
+.btn-primary, .btn-secondary, .btn-danger, .btn-browse {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    padding: 0.6rem 1.2rem;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    letter-spacing: 0.02em;
+    font-weight: 500;
+}
+
+.btn-primary {
+    background: var(--ink);
+    color: var(--bg);
+}
+
+.btn-primary:hover {
+    background: var(--accent);
+    transform: translateY(-1px);
+}
+
+.btn-secondary {
+    background: var(--bg-card);
+    color: var(--ink);
+    border-color: var(--line);
+}
+
+.btn-secondary:hover {
+    background: var(--bg-elevated);
+    border-color: var(--ink-soft);
+}
+
+.btn-danger {
+    background: var(--danger);
+    color: var(--bg);
+}
+
+.btn-danger:hover {
+    filter: brightness(1.1);
+}
+
+.btn-browse {
+    background: var(--accent-soft);
+    color: var(--ink);
+    border-color: transparent;
+    font-size: 0.75rem;
+    padding: 0.5rem 0.9rem;
+    flex-shrink: 0;
+}
+
+.btn-browse:hover {
+    background: var(--accent);
+    color: var(--bg);
+}
+
+/* Jobs grid */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.25rem;
+}
+
+.job-card {
+    background: var(--bg-card);
+    border: 1px solid var(--line-soft);
+    border-radius: 8px;
+    padding: 1.5rem;
+    transition: all 0.2s ease;
+    box-shadow: var(--shadow);
+}
+
+.job-card:hover {
+    border-color: var(--line);
+    box-shadow: var(--shadow-elevated);
+    transform: translateY(-2px);
+}
+
+.job-card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.75rem;
+    gap: 1rem;
+}
+
+.job-name {
+    font-family: 'Fraunces', serif;
+    font-size: 1.1rem;
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+.tool-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    padding: 0.2rem 0.55rem;
+    background: var(--ink);
+    color: var(--bg);
+    border-radius: 3px;
+    text-transform: lowercase;
+    letter-spacing: 0.05em;
+    flex-shrink: 0;
+}
+
+.job-meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--ink-faded);
+    margin-bottom: 1rem;
+}
+
+.job-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.job-actions button {
+    flex: 1;
+    font-size: 0.8rem;
+    padding: 0.5rem;
+}
+
+.empty {
+    text-align: center;
+    padding: 4rem 1rem;
+    color: var(--ink-soft);
+}
+
+.empty p {
+    margin-bottom: 1.5rem;
+    font-style: italic;
+}
+
+/* Form */
+.form {
+    background: var(--bg-card);
+    border: 1px solid var(--line-soft);
+    border-radius: 8px;
+    padding: 2rem;
+    max-width: 700px;
+    box-shadow: var(--shadow);
+}
+
+.form label {
+    display: block;
+    margin-bottom: 1.25rem;
+}
+
+.form label > span {
+    display: block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--ink-soft);
+    margin-bottom: 0.5rem;
+    letter-spacing: 0.02em;
+}
+
+.form label > span small {
+    color: var(--ink-faded);
+    font-weight: normal;
+    font-size: 0.7rem;
+    display: block;
+    margin-top: 0.2rem;
+}
+
+.form input[type="text"], .form select {
+    width: 100%;
+    padding: 0.7rem 0.85rem;
+    font-size: 0.9rem;
+    background: var(--bg-elevated);
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    color: var(--ink);
+    transition: border-color 0.15s ease;
+}
+
+.form input[type="text"]:focus, .form select:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(212, 80, 46, 0.1);
+}
+
+/* Input with browse button */
+.input-with-browse {
+    display: flex;
+    gap: 0.5rem;
+    align-items: stretch;
+}
+
+.input-with-browse input[type="text"] {
+    flex: 1;
+}
+
+.checkbox-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+}
+
+.checkbox {
+    display: flex !important;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0 !important;
+    cursor: pointer;
+}
+
+.checkbox input {
+    cursor: pointer;
+}
+
+.checkbox span {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--ink-soft);
+    margin: 0 !important;
+}
+
+.allowed-info {
+    background: var(--bg-elevated);
+    border: 1px dashed var(--line);
+    border-radius: 5px;
+    padding: 0.85rem 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.allowed-info strong {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--ink-soft);
+    display: block;
+    margin-bottom: 0.3rem;
+}
+
+.allowed-info #allowed-roots {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--ink);
+    word-break: break-all;
+}
+
+.form-actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+}
+
+.tool-fields.hidden { display: none; }
+
+/* Runs list */
+.runs-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.run-row {
+    background: var(--bg-card);
+    border: 1px solid var(--line-soft);
+    border-radius: 6px;
+    padding: 0.85rem 1.2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    transition: all 0.15s ease;
+    cursor: pointer;
+}
+
+.run-row:hover {
+    border-color: var(--line);
+    background: var(--bg-elevated);
+}
+
+.run-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.run-time {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--ink-faded);
+}
+
+.run-id {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--ink);
+    margin-top: 0.15rem;
+}
+
+.status-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    padding: 0.25rem 0.65rem;
+    border-radius: 3px;
+    text-transform: lowercase;
+    letter-spacing: 0.05em;
+    flex-shrink: 0;
+}
+
+.status-running {
+    background: var(--accent);
+    color: var(--bg);
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+.status-success {
+    background: var(--success);
+    color: var(--bg);
+}
+
+.status-failed, .status-error {
+    background: var(--danger);
+    color: var(--bg);
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.65; }
+}
+
+/* Modal */
+.modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(26, 24, 22, 0.6);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 2rem;
+}
+
+.modal.hidden { display: none; }
+
+.modal-content {
+    background: var(--bg-elevated);
+    border-radius: 8px;
+    width: 100%;
+    max-width: 900px;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: var(--shadow-elevated);
+    overflow: hidden;
+}
+
+.modal-head {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--line-soft);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--bg-card);
+}
+
+.modal-head h3 {
+    font-family: 'Fraunces', serif;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.log-pre {
+    flex: 1;
+    overflow: auto;
+    padding: 1.25rem 1.5rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    line-height: 1.55;
+    color: var(--ink);
+    background: var(--bg-elevated);
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+
+/* File Browser Modal */
+.browser-modal {
+    max-width: 720px;
+    max-height: 80vh;
+}
+
+.browser-path {
+    padding: 0.75rem 1.5rem;
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--line-soft);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--ink-soft);
+    word-break: break-all;
+}
+
+.browser-body {
+    flex: 1;
+    overflow: auto;
+    background: var(--bg-elevated);
+    min-height: 300px;
+}
+
+.browser-list {
+    list-style: none;
+    padding: 0.5rem 0;
+}
+
+.browser-item {
+    padding: 0.5rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    transition: all 0.1s ease;
+    border-left: 3px solid transparent;
+}
+
+.browser-item:hover {
+    background: var(--bg-card);
+    border-left-color: var(--accent-soft);
+}
+
+.browser-item.selected {
+    background: var(--bg-card);
+    border-left-color: var(--accent);
+}
+
+.browser-item.parent {
+    color: var(--ink-soft);
+    font-style: italic;
+}
+
+.browser-icon {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.9rem;
+    width: 1.5rem;
+    text-align: center;
+    color: var(--accent-warm);
+    flex-shrink: 0;
+}
+
+.browser-item.file .browser-icon {
+    color: var(--ink-faded);
+}
+
+.browser-name {
+    flex: 1;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    word-break: break-all;
+}
+
+.browser-item.file .browser-name {
+    color: var(--ink-soft);
+}
+
+.browser-size {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--ink-faded);
+    flex-shrink: 0;
+}
+
+.browser-foot {
+    background: var(--bg-card);
+    border-top: 1px solid var(--line-soft);
+    padding: 1rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.browser-selected {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.browser-selected-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--ink-soft);
+}
+
+#browser-selected-path {
+    font-size: 0.8rem;
+    color: var(--ink);
+    background: var(--bg-elevated);
+    padding: 0.3rem 0.55rem;
+    border-radius: 3px;
+    border: 1px solid var(--line);
+    word-break: break-all;
+    flex: 1;
+    min-width: 0;
+}
+
+.browser-foot-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.browser-slash {
+    flex: 1;
+    min-width: 0;
+}
+
+.browser-empty, .browser-error {
+    padding: 3rem 1.5rem;
+    text-align: center;
+    color: var(--ink-soft);
+    font-style: italic;
+}
+
+.browser-error {
+    color: var(--danger);
+}
+
+/* Toast */
+.toast {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    background: var(--ink);
+    color: var(--bg);
+    padding: 0.85rem 1.25rem;
+    border-radius: 5px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    box-shadow: var(--shadow-elevated);
+    transform: translateY(120%);
+    transition: transform 0.25s ease;
+    z-index: 200;
+    max-width: 400px;
+}
+
+.toast.show { transform: translateY(0); }
+
+.toast.error { background: var(--danger); }
+.toast.success { background: var(--success); }
+
+.hidden { display: none !important; }
+
+/* Responsive */
+@media (max-width: 640px) {
+    .hdr-inner { padding: 1rem; }
+    .main { padding: 1.5rem 1rem 3rem; }
+    .form { padding: 1.25rem; }
+
+    .section-head {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-start;
+    }
+
+    .modal { padding: 0; }
+
+    .modal-content {
+        height: 100%;
+        max-height: 100%;
+        border-radius: 0;
+    }
+
+    .input-with-browse {
+        flex-direction: column;
+    }
+
+    .btn-browse { align-self: flex-end; }
+}

@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>photonne-tools</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <header class="hdr">
+        <div class="hdr-inner">
+            <h1 class="logo">photonne-tools<span class="dot">.</span></h1>
+            <nav class="tabs">
+                <button class="tab active" data-tab="jobs">jobs</button>
+                <button class="tab" data-tab="new">new job</button>
+                <button class="tab" data-tab="runs">runs</button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="main">
+        <!-- Tab: Jobs list -->
+        <section id="tab-jobs" class="tab-content active">
+            <div class="section-head">
+                <h2>jobs</h2>
+                <button class="btn-primary" onclick="switchTab('new')">+ new job</button>
+            </div>
+            <div id="jobs-list" class="grid"></div>
+            <div id="jobs-empty" class="empty hidden">
+                <p>no hay jobs todavía.</p>
+                <button class="btn-primary" onclick="switchTab('new')">crea tu primer job</button>
+            </div>
+        </section>
+
+        <!-- Tab: New job -->
+        <section id="tab-new" class="tab-content">
+            <div class="section-head">
+                <h2>new job</h2>
+            </div>
+            <form id="new-job-form" class="form">
+                <label>
+                    <span>nombre</span>
+                    <input type="text" name="name" required placeholder="ej. backup fotos AMB a shared">
+                </label>
+
+                <label>
+                    <span>herramienta</span>
+                    <select name="tool" id="tool-select" required>
+                        <option value="rsync">rsync — copia/sincronización</option>
+                        <option value="exiftool">exiftool — reparar fechas desde EXIF</option>
+                    </select>
+                </label>
+
+                <!-- Campos rsync -->
+                <div id="fields-rsync" class="tool-fields">
+                    <label>
+                        <span>origen <small>(termina en '/' para copiar contenido; sin '/' para copiar la carpeta completa)</small></span>
+                        <div class="input-with-browse">
+                            <input type="text" name="rsync_source" placeholder="/media/HDD/Backup/photo/">
+                            <button type="button" class="btn-browse" onclick="openBrowser('rsync_source')">browse</button>
+                        </div>
+                    </label>
+                    <label>
+                        <span>destino</span>
+                        <div class="input-with-browse">
+                            <input type="text" name="rsync_destination" placeholder="/media/HDD/Gallery/Photonne/shared/">
+                            <button type="button" class="btn-browse" onclick="openBrowser('rsync_destination')">browse</button>
+                        </div>
+                    </label>
+                    <label>
+                        <span>flags</span>
+                        <input type="text" name="rsync_flags" value="-av" placeholder="-av">
+                    </label>
+                    <div class="checkbox-row">
+                        <label class="checkbox">
+                            <input type="checkbox" name="rsync_dry_run">
+                            <span>dry-run (simular sin copiar)</span>
+                        </label>
+                        <label class="checkbox">
+                            <input type="checkbox" name="rsync_delete">
+                            <span>--delete (borrar en destino lo que no esté en origen)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Campos exiftool -->
+                <div id="fields-exiftool" class="tool-fields hidden">
+                    <label>
+                        <span>directorio objetivo</span>
+                        <div class="input-with-browse">
+                            <input type="text" name="exif_target" placeholder="/media/HDD/Gallery/Photonne/shared/">
+                            <button type="button" class="btn-browse" onclick="openBrowser('exif_target')">browse</button>
+                        </div>
+                    </label>
+                    <label>
+                        <span>modo</span>
+                        <select name="exif_mode">
+                            <option value="repair_mtime">reparar mtime desde EXIF</option>
+                            <option value="custom">personalizado</option>
+                        </select>
+                    </label>
+                    <label id="exif-custom-row" class="hidden">
+                        <span>argumentos custom</span>
+                        <input type="text" name="exif_custom_args" placeholder="-FileModifyDate<DateTimeOriginal">
+                    </label>
+                    <div class="checkbox-row">
+                        <label class="checkbox">
+                            <input type="checkbox" name="exif_recursive" checked>
+                            <span>recursivo</span>
+                        </label>
+                        <label class="checkbox">
+                            <input type="checkbox" name="exif_dry_run">
+                            <span>dry-run</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="allowed-info">
+                    <strong>directorios permitidos:</strong>
+                    <div id="allowed-roots">{{ allowed_roots | join(', ') }}</div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">crear job</button>
+                    <button type="button" class="btn-secondary" onclick="switchTab('jobs')">cancelar</button>
+                </div>
+            </form>
+        </section>
+
+        <!-- Tab: Runs -->
+        <section id="tab-runs" class="tab-content">
+            <div class="section-head">
+                <h2>runs</h2>
+                <button class="btn-secondary" onclick="loadRuns()">refrescar</button>
+            </div>
+            <div id="runs-list" class="runs-list"></div>
+        </section>
+
+        <!-- Modal: Log viewer -->
+        <div id="log-modal" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-head">
+                    <h3 id="log-title">log</h3>
+                    <div class="modal-actions">
+                        <button id="log-stop-btn" class="btn-danger hidden">stop</button>
+                        <button class="btn-secondary" onclick="closeLog()">cerrar</button>
+                    </div>
+                </div>
+                <pre id="log-content" class="log-pre"></pre>
+            </div>
+        </div>
+
+        <!-- Modal: File browser -->
+        <div id="browser-modal" class="modal hidden">
+            <div class="modal-content browser-modal">
+                <div class="modal-head">
+                    <h3>elegir directorio</h3>
+                    <button class="btn-secondary" onclick="closeBrowser()">cerrar</button>
+                </div>
+                <div class="browser-path" id="browser-current-path"></div>
+                <div class="browser-body">
+                    <ul class="browser-list" id="browser-list"></ul>
+                </div>
+                <div class="browser-foot">
+                    <div class="browser-selected">
+                        <span class="browser-selected-label">seleccionado:</span>
+                        <code id="browser-selected-path">(nada)</code>
+                    </div>
+                    <div class="browser-foot-actions">
+                        <label class="checkbox browser-slash">
+                            <input type="checkbox" id="browser-trailing-slash">
+                            <span>terminar en '/' (copiar contenido en rsync)</span>
+                        </label>
+                        <button class="btn-primary" id="browser-select-btn" onclick="selectCurrentPath()">usar esta carpeta</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="toast" class="toast"></div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
