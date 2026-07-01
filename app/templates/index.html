@@ -169,7 +169,25 @@
                         <button class="btn-secondary" onclick="closeLog()">Cerrar</button>
                     </div>
                 </div>
+                <div id="log-command" class="log-command hidden"></div>
+                <div id="log-progress" class="progress hidden">
+                    <div class="progress-bar">
+                        <div id="log-progress-fill" class="progress-fill"></div>
+                    </div>
+                    <span id="log-progress-label" class="progress-label"></span>
+                </div>
                 <pre id="log-content" class="log-pre"></pre>
+            </div>
+        </div>
+
+        <!-- Modal: Ver config de un job -->
+        <div id="config-modal" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-head">
+                    <h3 id="config-title">Configuración</h3>
+                    <button class="btn-secondary" onclick="closeConfig()">Cerrar</button>
+                </div>
+                <div id="config-body" class="config-body"></div>
             </div>
         </div>
 

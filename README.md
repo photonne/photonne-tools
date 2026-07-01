@@ -1,6 +1,15 @@
-# photonne-tools v0.1
+# photonne-tools v0.2
 
 Web app ligera para ejecutar operaciones de mantenimiento del NAS (rsync, exiftool) con UI, logs en vivo, persistencia de jobs, file browser integrado y configuración vía `.env`.
+
+## Novedades v0.2
+
+- **Ver la config de cada job:** botón "Ver config" en cada tarjeta para saber exactamente qué copia (origen, destino, flags…).
+- **Comando exacto por ejecución:** cada run guarda y muestra el comando que se lanzó, así sabes qué se copió realmente.
+- **Barra de progreso en vivo:** las ejecuciones de `rsync` muestran el porcentaje mientras copian (además del log en streaming).
+- **El proceso no depende de la ventana:** las tareas corren en el servidor; si cierras la pestaña la copia sigue, y puedes reconectarte con "Ver progreso" desde el panel de Jobs.
+- **Estado siempre visible:** el panel de Jobs se autoactualiza y marca las tareas en ejecución.
+- **Runs huérfanas tras un reinicio:** las ejecuciones que quedaron a medias se marcan como `interrupted` en lugar de aparecer eternamente como `running`.
 
 ## Novedades v0.1
 
@@ -17,7 +26,7 @@ Primera versión. Incluye:
 
 ```bash
 # 1. Descomprime
-unzip photonne-tools-v0.1.zip -d photonne-tools/
+unzip photonne-tools-v0.2.zip -d photonne-tools/
 cd photonne-tools/
 
 # 2. Crea .env desde plantilla local

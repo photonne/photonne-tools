@@ -559,9 +559,121 @@ code, pre, .mono, input, select {
     color: #ffffff;
 }
 
+.status-interrupted {
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--ink-faded);
+}
+
 @keyframes pulse {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.6; }
+}
+
+/* Indicador "running" en la job card */
+.job-running {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--accent);
+}
+
+.job-running .dot-live {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 1.2s ease-in-out infinite;
+}
+
+/* Comando exacto en el modal de log */
+.log-command {
+    padding: 0.6rem 1.5rem;
+    border-bottom: 1px solid var(--line-soft);
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--ink-soft);
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+
+.log-command.hidden { display: none; }
+
+/* Barra de progreso */
+.progress {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1.5rem;
+    border-bottom: 1px solid var(--line-soft);
+}
+
+.progress.hidden { display: none; }
+
+.progress-bar {
+    flex: 1;
+    height: 8px;
+    background: var(--line-soft);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    width: 0%;
+    background: var(--accent);
+    border-radius: 6px;
+    transition: width 0.3s ease;
+}
+
+.progress-fill.indeterminate {
+    width: 35%;
+    animation: indeterminate 1.2s ease-in-out infinite;
+}
+
+@keyframes indeterminate {
+    0% { margin-left: -35%; }
+    100% { margin-left: 100%; }
+}
+
+.progress-label {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    color: var(--ink-soft);
+    min-width: 3.5rem;
+    text-align: right;
+}
+
+/* Cuerpo del modal "Ver config" */
+.config-body {
+    padding: 1.25rem 1.5rem;
+    overflow-y: auto;
+}
+
+.config-row {
+    display: flex;
+    gap: 1rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--line-soft);
+    font-size: 0.85rem;
+}
+
+.config-row:last-child { border-bottom: none; }
+
+.config-key {
+    flex-shrink: 0;
+    width: 9rem;
+    color: var(--ink-faded);
+    font-family: var(--mono);
+    font-size: 0.75rem;
+}
+
+.config-val {
+    font-family: var(--mono);
+    color: var(--ink);
+    word-break: break-all;
 }
 
 /* Modal */

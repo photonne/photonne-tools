@@ -1,6 +1,6 @@
 """
 photonne-tools — herramienta web para ejecutar rsync, exiftool y similares en el NAS.
-v0.1: file browser integrado para elegir paths con clicks.
+v0.2: ver config de jobs, comando exacto por run, progreso en vivo y estado persistente.
 """
 import asyncio
 import os
@@ -73,12 +73,27 @@ def init_db():
             finished_at TEXT,
             exit_code INTEGER,
             log_path TEXT NOT NULL,
+            command TEXT,
             FOREIGN KEY (job_id) REFERENCES jobs(id) ON DELETE CASCADE
         );
 
         CREATE INDEX IF NOT EXISTS idx_runs_job_id ON runs(job_id);
         CREATE INDEX IF NOT EXISTS idx_runs_started_at ON runs(started_at);
     """)
+
+    # Migración idempotente: la columna 'command' se añadió en v0.2 para
+    # guardar el comando exacto ejecutado en cada run.
+    cols = {r["name"] for r in conn.execute("PRAGMA table_info(runs)").fetchall()}
+    if "command" not in cols:
+        conn.execute("ALTER TABLE runs ADD COLUMN command TEXT")
+
+    # Reconciliación al arrancar: cualquier run que quedó 'running' es huérfana
+    # de un reinicio (su proceso ya no existe), así que la marcamos interrumpida.
+    conn.execute(
+        "UPDATE runs SET status = 'interrupted', finished_at = ? WHERE status = 'running'",
+        (datetime.now().isoformat(),),
+    )
+
     conn.commit()
     conn.close()
 
@@ -195,6 +210,34 @@ class JobCreate(BaseModel):
 # Builders de comandos
 # ============================================================
 
+_rsync_progress2: Optional[bool] = None
+
+
+def rsync_supports_progress2() -> bool:
+    """rsync >= 3.1 soporta --info=progress2 (porcentaje global). El rsync
+    antiguo de macOS (2.6.9) no, y rechazaría el comando entero. Detectamos
+    la capacidad una vez y la cacheamos para caer a --progress si no está."""
+    global _rsync_progress2
+    if _rsync_progress2 is None:
+        import subprocess
+        try:
+            out = subprocess.run(
+                ["rsync", "--version"],
+                capture_output=True, text=True, timeout=5,
+            ).stdout
+            first = out.splitlines()[0] if out else ""
+            import re
+            m = re.search(r"version\s+(\d+)\.(\d+)", first)
+            if m:
+                major, minor = int(m.group(1)), int(m.group(2))
+                _rsync_progress2 = (major, minor) >= (3, 1)
+            else:
+                _rsync_progress2 = False
+        except Exception:
+            _rsync_progress2 = False
+    return _rsync_progress2
+
+
 def build_rsync_command(config: dict) -> list[str]:
     rcfg = RsyncConfig(**config)
     src = validate_path(rcfg.source, must_exist=True)
@@ -213,7 +256,12 @@ def build_rsync_command(config: dict) -> list[str]:
         if not f.startswith("--rsh") and not f.startswith("-e") and f != "--rsync-path"
     ]
 
+    # --progress da el porcentaje por fichero (universal). En rsync >= 3.1
+    # añadimos --info=progress2 para un porcentaje global agregado más útil
+    # en la barra de progreso; en rsync antiguo (macOS) se omite para no fallar.
     cmd = ["rsync"] + safe_flags + ["--progress"]
+    if rsync_supports_progress2():
+        cmd.append("--info=progress2")
     if rcfg.dry_run:
         cmd.append("--dry-run")
     if rcfg.delete:
@@ -230,7 +278,8 @@ def build_exiftool_command(config: dict) -> list[str]:
     ecfg = ExiftoolConfig(**config)
     target = validate_path(ecfg.target, must_exist=True)
 
-    cmd = ["exiftool"]
+    # -progress hace que exiftool emita "[x/y]" por fichero (contador para la UI).
+    cmd = ["exiftool", "-progress"]
     if ecfg.recursive:
         cmd.append("-r")
 
@@ -276,12 +325,29 @@ async def run_job_async(job_id: str, run_id: str, cmd: list[str], log_path: Path
             )
             running_jobs[run_id] = proc
 
-            async for line in proc.stdout:
-                try:
-                    decoded = line.decode("utf-8", errors="replace")
-                except Exception:
-                    decoded = str(line)
-                log_file.write(decoded)
+            # rsync (y exiftool -progress) actualizan el progreso con retorno de
+            # carro '\r', no salto de línea. Leemos por chunks y troceamos por
+            # '\r' y '\n' para que cada actualización de progreso se vuelque como
+            # una línea propia en el log (y así llegue al stream SSE en vivo).
+            # Un decoder incremental evita romper caracteres UTF-8 partidos entre
+            # dos chunks.
+            import codecs
+            decoder = codecs.getincrementaldecoder("utf-8")(errors="replace")
+            buffer = ""
+            while True:
+                chunk = await proc.stdout.read(4096)
+                if not chunk:
+                    break
+                buffer += decoder.decode(chunk)
+                buffer = buffer.replace("\r\n", "\n").replace("\r", "\n")
+                lines = buffer.split("\n")
+                buffer = lines.pop()  # el último trozo puede estar incompleto
+                for line in lines:
+                    log_file.write(line + "\n")
+                log_file.flush()
+            buffer += decoder.decode(b"", final=True)
+            if buffer:
+                log_file.write(buffer + "\n")
                 log_file.flush()
 
             exit_code = await proc.wait()
@@ -396,12 +462,29 @@ async def list_jobs(_: str = Depends(require_auth)):
     rows = conn.execute("""
         SELECT j.*,
                (SELECT status FROM runs WHERE job_id = j.id ORDER BY started_at DESC LIMIT 1) as last_status,
-               (SELECT started_at FROM runs WHERE job_id = j.id ORDER BY started_at DESC LIMIT 1) as last_run
+               (SELECT started_at FROM runs WHERE job_id = j.id ORDER BY started_at DESC LIMIT 1) as last_run,
+               (SELECT id FROM runs WHERE job_id = j.id ORDER BY started_at DESC LIMIT 1) as last_run_id
         FROM jobs j
         ORDER BY j.updated_at DESC
     """).fetchall()
     conn.close()
     return [dict(r) for r in rows]
+
+
+@app.get("/api/jobs/{job_id}")
+async def get_job(job_id: str, _: str = Depends(require_auth)):
+    import json
+    conn = get_db()
+    row = conn.execute("SELECT * FROM jobs WHERE id = ?", (job_id,)).fetchone()
+    conn.close()
+    if not row:
+        raise HTTPException(404, "Job no encontrado")
+    job = dict(row)
+    try:
+        job["config"] = json.loads(job["config"])
+    except (ValueError, TypeError):
+        job["config"] = {}
+    return job
 
 
 @app.post("/api/jobs")
@@ -458,16 +541,17 @@ async def run_job(job_id: str, _: str = Depends(require_auth)):
 
     run_id = str(uuid.uuid4())
     log_path = LOG_DIR / f"{run_id}.log"
+    command_str = " ".join(cmd)
     conn.execute(
-        "INSERT INTO runs (id, job_id, status, started_at, log_path) VALUES (?, ?, ?, ?, ?)",
-        (run_id, job_id, "running", datetime.now().isoformat(), str(log_path)),
+        "INSERT INTO runs (id, job_id, status, started_at, log_path, command) VALUES (?, ?, ?, ?, ?, ?)",
+        (run_id, job_id, "running", datetime.now().isoformat(), str(log_path), command_str),
     )
     conn.commit()
     conn.close()
 
     asyncio.create_task(run_job_async(job_id, run_id, cmd, log_path))
 
-    return {"run_id": run_id, "command": " ".join(cmd)}
+    return {"run_id": run_id, "command": command_str}
 
 
 @app.post("/api/runs/{run_id}/stop")
@@ -552,7 +636,7 @@ async def stream_log(run_id: str, _: str = Depends(require_auth)):
 
 @app.get("/api/health")
 async def health():
-    return {"status": "ok", "version": "0.1.0"}
+    return {"status": "ok", "version": "0.2.0"}
 
 
 @app.exception_handler(ValueError)
