@@ -137,7 +137,7 @@ async function loadBrowserPath(path) {
 function renderBrowserRoots(roots) {
     const list = document.getElementById('browser-list');
     if (roots.length === 0) {
-        list.innerHTML = '<li class="browser-empty">no hay raíces configuradas.</li>';
+        list.innerHTML = '<li class="browser-empty">No hay raíces configuradas.</li>';
         return;
     }
     list.innerHTML = roots.map(r => {
@@ -146,7 +146,7 @@ function renderBrowserRoots(roots) {
                 <li class="browser-item file">
                     <span class="browser-icon">✕</span>
                     <span class="browser-name">${escapeHtml(r.path)}</span>
-                    <span class="browser-size">no existe</span>
+                    <span class="browser-size">No existe</span>
                 </li>
             `;
         }
@@ -184,7 +184,7 @@ function renderBrowserListing(data) {
     }
 
     if (data.entries.length === 0) {
-        html += '<li class="browser-empty">(directorio vacío)</li>';
+        html += '<li class="browser-empty">(Directorio vacío)</li>';
     } else {
         html += data.entries.map(e => {
             if (e.is_dir) {
@@ -259,13 +259,13 @@ async function loadJobs() {
                     <span class="tool-badge">${job.tool}</span>
                 </div>
                 <div class="job-meta">
-                    ${job.last_run ? `última run: ${formatDate(job.last_run)}` : 'sin ejecuciones'}
+                    ${job.last_run ? `Última run: ${formatDate(job.last_run)}` : 'Sin ejecuciones'}
                     ${job.last_status ? ` · <span class="status-badge status-${job.last_status}">${job.last_status}</span>` : ''}
                 </div>
                 <div class="job-actions">
-                    <button class="btn-primary" onclick="runJob('${job.id}', '${escapeAttr(job.name)}')">run</button>
-                    <button class="btn-secondary" onclick="viewRuns('${job.id}')">history</button>
-                    <button class="btn-secondary" onclick="deleteJob('${job.id}', '${escapeAttr(job.name)}')">delete</button>
+                    <button class="btn-primary" onclick="runJob('${job.id}', '${escapeAttr(job.name)}')">Ejecutar</button>
+                    <button class="btn-secondary" onclick="viewRuns('${job.id}')">Historial</button>
+                    <button class="btn-secondary" onclick="deleteJob('${job.id}', '${escapeAttr(job.name)}')">Eliminar</button>
                 </div>
             </div>
         `).join('');
@@ -302,7 +302,7 @@ async function viewRuns(jobId) {
             toast('Sin ejecuciones todavía', '');
             return;
         }
-        openLog(runs[0].id, 'log', runs[0].status === 'running');
+        openLog(runs[0].id, 'Log', runs[0].status === 'running');
     } catch (e) {
         toast('Error: ' + e.message, 'error');
     }
@@ -370,11 +370,11 @@ async function loadRuns() {
         const runs = await apiGet('/api/runs?limit=50');
         const container = document.getElementById('runs-list');
         if (runs.length === 0) {
-            container.innerHTML = '<div class="empty"><p>sin runs todavía.</p></div>';
+            container.innerHTML = '<div class="empty"><p>Aún no hay runs.</p></div>';
             return;
         }
         container.innerHTML = runs.map(run => `
-            <div class="run-row" onclick="openLog('${run.id}', 'run ${run.id.slice(0, 8)}', ${run.status === 'running'})">
+            <div class="run-row" onclick="openLog('${run.id}', 'Run ${run.id.slice(0, 8)}', ${run.status === 'running'})">
                 <div class="run-info">
                     <div class="run-time">${formatDate(run.started_at)}</div>
                     <div class="run-id">${run.id.slice(0, 8)}… · job ${run.job_id.slice(0, 8)}…</div>

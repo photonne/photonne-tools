@@ -3,21 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>
+        (function () {
+            try {
+                var t = localStorage.getItem('photonne-theme');
+                if (t !== 'light' && t !== 'dark') {
+                    t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                }
+                document.documentElement.setAttribute('data-theme', t);
+            } catch (e) {
+                document.documentElement.setAttribute('data-theme', 'light');
+            }
+        })();
+    </script>
     <title>photonne-tools</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
     <header class="hdr">
         <div class="hdr-inner">
             <h1 class="logo">photonne-tools<span class="dot">.</span></h1>
-            <nav class="tabs">
-                <button class="tab active" data-tab="jobs">jobs</button>
-                <button class="tab" data-tab="new">new job</button>
-                <button class="tab" data-tab="runs">runs</button>
-            </nav>
+            <div class="hdr-actions">
+                <nav class="tabs">
+                    <button class="tab active" data-tab="jobs">Jobs</button>
+                    <button class="tab" data-tab="new">Nuevo job</button>
+                    <button class="tab" data-tab="runs">Runs</button>
+                </nav>
+                <button id="theme-toggle" class="theme-toggle" type="button"
+                        aria-label="Cambiar tema" title="Cambiar tema">
+                    <span class="ico-sun" aria-hidden="true">☀</span>
+                    <span class="ico-moon" aria-hidden="true">☾</span>
+                </button>
+            </div>
         </div>
     </header>
 
@@ -25,59 +45,59 @@
         <!-- Tab: Jobs list -->
         <section id="tab-jobs" class="tab-content active">
             <div class="section-head">
-                <h2>jobs</h2>
-                <button class="btn-primary" onclick="switchTab('new')">+ new job</button>
+                <h2>Jobs</h2>
+                <button class="btn-primary" onclick="switchTab('new')">+ Nuevo job</button>
             </div>
             <div id="jobs-list" class="grid"></div>
             <div id="jobs-empty" class="empty hidden">
-                <p>no hay jobs todavía.</p>
-                <button class="btn-primary" onclick="switchTab('new')">crea tu primer job</button>
+                <p>Aún no hay jobs.</p>
+                <button class="btn-primary" onclick="switchTab('new')">Crea tu primer job</button>
             </div>
         </section>
 
         <!-- Tab: New job -->
         <section id="tab-new" class="tab-content">
             <div class="section-head">
-                <h2>new job</h2>
+                <h2>Nuevo job</h2>
             </div>
             <form id="new-job-form" class="form">
                 <label>
-                    <span>nombre</span>
-                    <input type="text" name="name" required placeholder="ej. backup fotos AMB a shared">
+                    <span>Nombre</span>
+                    <input type="text" name="name" required placeholder="Ej. Backup fotos AMB a shared">
                 </label>
 
                 <label>
-                    <span>herramienta</span>
+                    <span>Herramienta</span>
                     <select name="tool" id="tool-select" required>
-                        <option value="rsync">rsync — copia/sincronización</option>
-                        <option value="exiftool">exiftool — reparar fechas desde EXIF</option>
+                        <option value="rsync">rsync — Copia/sincronización</option>
+                        <option value="exiftool">exiftool — Reparar fechas desde EXIF</option>
                     </select>
                 </label>
 
                 <!-- Campos rsync -->
                 <div id="fields-rsync" class="tool-fields">
                     <label>
-                        <span>origen <small>(termina en '/' para copiar contenido; sin '/' para copiar la carpeta completa)</small></span>
+                        <span>Origen <small>(termina en '/' para copiar contenido; sin '/' para copiar la carpeta completa)</small></span>
                         <div class="input-with-browse">
                             <input type="text" name="rsync_source" placeholder="/media/HDD/Backup/photo/">
                             <button type="button" class="btn-browse" onclick="openBrowser('rsync_source')">browse</button>
                         </div>
                     </label>
                     <label>
-                        <span>destino</span>
+                        <span>Destino</span>
                         <div class="input-with-browse">
                             <input type="text" name="rsync_destination" placeholder="/media/HDD/Gallery/Photonne/shared/">
                             <button type="button" class="btn-browse" onclick="openBrowser('rsync_destination')">browse</button>
                         </div>
                     </label>
                     <label>
-                        <span>flags</span>
+                        <span>Flags</span>
                         <input type="text" name="rsync_flags" value="-av" placeholder="-av">
                     </label>
                     <div class="checkbox-row">
                         <label class="checkbox">
                             <input type="checkbox" name="rsync_dry_run">
-                            <span>dry-run (simular sin copiar)</span>
+                            <span>Dry-run (simular sin copiar)</span>
                         </label>
                         <label class="checkbox">
                             <input type="checkbox" name="rsync_delete">
@@ -89,43 +109,43 @@
                 <!-- Campos exiftool -->
                 <div id="fields-exiftool" class="tool-fields hidden">
                     <label>
-                        <span>directorio objetivo</span>
+                        <span>Directorio objetivo</span>
                         <div class="input-with-browse">
                             <input type="text" name="exif_target" placeholder="/media/HDD/Gallery/Photonne/shared/">
                             <button type="button" class="btn-browse" onclick="openBrowser('exif_target')">browse</button>
                         </div>
                     </label>
                     <label>
-                        <span>modo</span>
+                        <span>Modo</span>
                         <select name="exif_mode">
-                            <option value="repair_mtime">reparar mtime desde EXIF</option>
-                            <option value="custom">personalizado</option>
+                            <option value="repair_mtime">Reparar mtime desde EXIF</option>
+                            <option value="custom">Personalizado</option>
                         </select>
                     </label>
                     <label id="exif-custom-row" class="hidden">
-                        <span>argumentos custom</span>
+                        <span>Argumentos personalizados</span>
                         <input type="text" name="exif_custom_args" placeholder="-FileModifyDate<DateTimeOriginal">
                     </label>
                     <div class="checkbox-row">
                         <label class="checkbox">
                             <input type="checkbox" name="exif_recursive" checked>
-                            <span>recursivo</span>
+                            <span>Recursivo</span>
                         </label>
                         <label class="checkbox">
                             <input type="checkbox" name="exif_dry_run">
-                            <span>dry-run</span>
+                            <span>Dry-run</span>
                         </label>
                     </div>
                 </div>
 
                 <div class="allowed-info">
-                    <strong>directorios permitidos:</strong>
+                    <strong>Directorios permitidos:</strong>
                     <div id="allowed-roots">{{ allowed_roots | join(', ') }}</div>
                 </div>
 
                 <div class="form-actions">
-                    <button type="submit" class="btn-primary">crear job</button>
-                    <button type="button" class="btn-secondary" onclick="switchTab('jobs')">cancelar</button>
+                    <button type="submit" class="btn-primary">Crear job</button>
+                    <button type="button" class="btn-secondary" onclick="switchTab('jobs')">Cancelar</button>
                 </div>
             </form>
         </section>
@@ -133,8 +153,8 @@
         <!-- Tab: Runs -->
         <section id="tab-runs" class="tab-content">
             <div class="section-head">
-                <h2>runs</h2>
-                <button class="btn-secondary" onclick="loadRuns()">refrescar</button>
+                <h2>Runs</h2>
+                <button class="btn-secondary" onclick="loadRuns()">Refrescar</button>
             </div>
             <div id="runs-list" class="runs-list"></div>
         </section>
@@ -143,10 +163,10 @@
         <div id="log-modal" class="modal hidden">
             <div class="modal-content">
                 <div class="modal-head">
-                    <h3 id="log-title">log</h3>
+                    <h3 id="log-title">Log</h3>
                     <div class="modal-actions">
-                        <button id="log-stop-btn" class="btn-danger hidden">stop</button>
-                        <button class="btn-secondary" onclick="closeLog()">cerrar</button>
+                        <button id="log-stop-btn" class="btn-danger hidden">Detener</button>
+                        <button class="btn-secondary" onclick="closeLog()">Cerrar</button>
                     </div>
                 </div>
                 <pre id="log-content" class="log-pre"></pre>
@@ -157,8 +177,8 @@
         <div id="browser-modal" class="modal hidden">
             <div class="modal-content browser-modal">
                 <div class="modal-head">
-                    <h3>elegir directorio</h3>
-                    <button class="btn-secondary" onclick="closeBrowser()">cerrar</button>
+                    <h3>Elegir directorio</h3>
+                    <button class="btn-secondary" onclick="closeBrowser()">Cerrar</button>
                 </div>
                 <div class="browser-path" id="browser-current-path"></div>
                 <div class="browser-body">
@@ -166,15 +186,15 @@
                 </div>
                 <div class="browser-foot">
                     <div class="browser-selected">
-                        <span class="browser-selected-label">seleccionado:</span>
-                        <code id="browser-selected-path">(nada)</code>
+                        <span class="browser-selected-label">Seleccionado:</span>
+                        <code id="browser-selected-path">(ninguno)</code>
                     </div>
                     <div class="browser-foot-actions">
                         <label class="checkbox browser-slash">
                             <input type="checkbox" id="browser-trailing-slash">
-                            <span>terminar en '/' (copiar contenido en rsync)</span>
+                            <span>Terminar en '/' (copiar contenido en rsync)</span>
                         </label>
-                        <button class="btn-primary" id="browser-select-btn" onclick="selectCurrentPath()">usar esta carpeta</button>
+                        <button class="btn-primary" id="browser-select-btn" onclick="selectCurrentPath()">Usar esta carpeta</button>
                     </div>
                 </div>
             </div>
@@ -183,6 +203,13 @@
 
     <div id="toast" class="toast"></div>
 
+    <script>
+        document.getElementById('theme-toggle').addEventListener('click', function () {
+            var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', next);
+            try { localStorage.setItem('photonne-theme', next); } catch (e) {}
+        });
+    </script>
     <script src="/static/app.js"></script>
 </body>
 </html>
