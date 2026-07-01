@@ -326,28 +326,50 @@ async def run_job_async(job_id: str, run_id: str, cmd: list[str], log_path: Path
             running_jobs[run_id] = proc
 
             # rsync (y exiftool -progress) actualizan el progreso con retorno de
-            # carro '\r', no salto de línea. Leemos por chunks y troceamos por
-            # '\r' y '\n' para que cada actualización de progreso se vuelque como
-            # una línea propia en el log (y así llegue al stream SSE en vivo).
-            # Un decoder incremental evita romper caracteres UTF-8 partidos entre
+            # carro '\r', no salto de línea. Leemos por chunks y usamos
+            # splitlines(keepends=True), que separa por '\n', '\r' y '\r\n'
+            # conservando el terminador: así distinguimos líneas confirmadas
+            # ('\n') de actualizaciones de progreso transitorias ('\r'). Un
+            # decoder incremental evita romper caracteres UTF-8 partidos entre
             # dos chunks.
             import codecs
+            import time as _time
             decoder = codecs.getincrementaldecoder("utf-8")(errors="replace")
             buffer = ""
+            last_progress_write = 0.0
+            PROGRESS_MIN_INTERVAL = 0.2  # como mucho ~5 líneas de progreso/seg
             while True:
                 chunk = await proc.stdout.read(4096)
                 if not chunk:
                     break
                 buffer += decoder.decode(chunk)
-                buffer = buffer.replace("\r\n", "\n").replace("\r", "\n")
-                lines = buffer.split("\n")
-                buffer = lines.pop()  # el último trozo puede estar incompleto
-                for line in lines:
-                    log_file.write(line + "\n")
-                log_file.flush()
+                parts = buffer.splitlines(keepends=True)
+                # La última parte sin terminador es una línea incompleta: la
+                # dejamos en el buffer hasta que llegue el resto.
+                if parts and not parts[-1].endswith(("\n", "\r")):
+                    buffer = parts.pop()
+                else:
+                    buffer = ""
+                wrote = False
+                for part in parts:
+                    content = part.rstrip("\r\n")
+                    if part.endswith("\n"):
+                        log_file.write(content + "\n")  # línea confirmada
+                        wrote = True
+                    else:
+                        # Progreso transitorio ('\r'): lo persistimos como mucho
+                        # cada PROGRESS_MIN_INTERVAL para no inflar el log con
+                        # miles de ticks (evita el bloqueo de la UI al releerlo).
+                        now = _time.monotonic()
+                        if now - last_progress_write >= PROGRESS_MIN_INTERVAL:
+                            log_file.write(content + "\n")
+                            last_progress_write = now
+                            wrote = True
+                if wrote:
+                    log_file.flush()
             buffer += decoder.decode(b"", final=True)
             if buffer:
-                log_file.write(buffer + "\n")
+                log_file.write(buffer.rstrip("\r\n") + "\n")
                 log_file.flush()
 
             exit_code = await proc.wait()
@@ -629,7 +651,7 @@ async def stream_log(run_id: str, _: str = Depends(require_auth)):
                     if row2 and row2["status"] != "running":
                         yield "data: [FINALIZADO]\n\n"
                         break
-                    await asyncio.sleep(1)
+                    await asyncio.sleep(0.25)
 
     return StreamingResponse(generate(), media_type="text/event-stream")
 

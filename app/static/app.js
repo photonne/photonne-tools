@@ -7,6 +7,15 @@ let currentRunId = null;
 let jobsRefreshTimer = null;   // auto-refresh del panel de jobs
 let runCommands = {};          // run_id -> comando exacto (para el modal de log)
 
+// Buffer del visor de log: mantenemos las líneas en un array, colapsamos las
+// de progreso (como haría '\r' en un terminal) y volcamos al DOM una sola vez
+// por frame. Sin esto, un `pre.textContent +=` por línea crece O(n²) y bloquea
+// la UI en transferencias grandes o con muchos ficheros.
+let logLines = [];
+let logRenderScheduled = false;
+const LOG_MAX_LINES = 3000;
+const LOG_PROGRESS_RE = /\b\d{1,3}%/;
+
 // File browser state
 let browserTargetInput = null;   // qué input estamos rellenando
 let browserCurrentPath = null;   // path que estamos viendo actualmente
@@ -462,10 +471,46 @@ async function loadRuns() {
 // Log viewer
 // ============================================================
 
+function resetLog() {
+    logLines = [];
+    document.getElementById('log-content').textContent = '';
+}
+
+function pushLogLine(line) {
+    const n = logLines.length;
+    // Colapsa progreso consecutivo: si la nueva línea y la anterior son de
+    // progreso, sustituimos en vez de acumular (así el <pre> no crece sin fin).
+    if (n && LOG_PROGRESS_RE.test(line) && LOG_PROGRESS_RE.test(logLines[n - 1])) {
+        logLines[n - 1] = line;
+    } else {
+        logLines.push(line);
+    }
+    if (logLines.length > LOG_MAX_LINES) {
+        logLines.splice(0, logLines.length - LOG_MAX_LINES);
+    }
+}
+
+function scheduleLogRender() {
+    if (logRenderScheduled) return;
+    logRenderScheduled = true;
+    requestAnimationFrame(() => {
+        logRenderScheduled = false;
+        const pre = document.getElementById('log-content');
+        pre.textContent = logLines.join('\n');
+        pre.scrollTop = pre.scrollHeight;
+    });
+}
+
+function setLogFromText(text) {
+    logLines = [];
+    for (const line of String(text).split('\n')) pushLogLine(line);
+    scheduleLogRender();
+}
+
 async function openLog(runId, title, isLive, command) {
     currentRunId = runId;
     document.getElementById('log-title').textContent = title;
-    document.getElementById('log-content').textContent = '';
+    resetLog();
     document.getElementById('log-modal').classList.remove('hidden');
 
     // Comando exacto ejecutado (para saber qué ha copiado).
@@ -491,9 +536,7 @@ async function openLog(runId, title, isLive, command) {
     } else {
         try {
             const result = await apiGet(`/api/runs/${runId}/log`);
-            document.getElementById('log-content').textContent = result.content;
-            const pre = document.getElementById('log-content');
-            pre.scrollTop = pre.scrollHeight;
+            setLogFromText(result.content);
         } catch (e) {
             document.getElementById('log-content').textContent = 'Error cargando log: ' + e.message;
         }
@@ -502,19 +545,19 @@ async function openLog(runId, title, isLive, command) {
 
 function streamLog(runId) {
     if (currentEventSource) currentEventSource.close();
-    const pre = document.getElementById('log-content');
     currentEventSource = new EventSource(`/api/runs/${runId}/stream`);
 
     currentEventSource.onmessage = (e) => {
-        pre.textContent += e.data + '\n';
-        pre.scrollTop = pre.scrollHeight;
-        updateProgressFromLine(e.data);
+        pushLogLine(e.data);
+        scheduleLogRender();
         if (e.data.includes('[FINALIZADO]')) {
             currentEventSource.close();
             currentEventSource = null;
             document.getElementById('log-stop-btn').classList.add('hidden');
             finishProgress();
+            return;
         }
+        updateProgressFromLine(e.data);
     };
 
     currentEventSource.onerror = () => {
@@ -587,6 +630,7 @@ function closeLog() {
         currentEventSource = null;
     }
     resetProgress();
+    logLines = [];
     currentRunId = null;
 }
 
