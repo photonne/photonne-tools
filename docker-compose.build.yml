@@ -1,0 +1,9 @@
+# Override para desarrollo local: construye la imagen desde el Dockerfile
+# en vez de usar la publicada en GHCR.
+#
+# Uso (lo gestiona 'make rebuild'):
+#   docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
+
+services:
+  photonne-tools:
+    build: .

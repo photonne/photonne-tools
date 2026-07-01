@@ -1,10 +1,14 @@
 # Docker Compose lee automáticamente el archivo .env del mismo directorio.
 # Copia .env.example (para NAS) o .env.local.example (para Mac) a .env y edítalo.
+#
+# Este compose usa la imagen publicada en GHCR (pull-only): para actualizar,
+# ejecuta 'make update' (docker compose pull && up -d).
+# Para construir la imagen en local desde el código, usa 'make rebuild', que
+# añade el override docker-compose.build.yml.
 
 services:
   photonne-tools:
     image: ghcr.io/photonne/photonne-tools:latest
-    build: .
     container_name: photonne-tools
     restart: unless-stopped
 

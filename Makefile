@@ -1,7 +1,7 @@
 # Makefile con atajos para photonne-tools.
 # Uso: make <target>
 
-.PHONY: help init init-local up down logs restart rebuild clean check
+.PHONY: help init init-local up update down logs restart rebuild clean check
 
 help:
 	@echo "photonne-tools — comandos disponibles:"
@@ -9,10 +9,11 @@ help:
 	@echo "  make init         Crea .env desde .env.example (para NAS)"
 	@echo "  make init-local   Crea .env desde .env.local.example (para Mac)"
 	@echo "  make check        Valida configuración antes de arrancar"
-	@echo "  make up           Levanta el contenedor"
+	@echo "  make up           Levanta el contenedor (imagen de GHCR)"
+	@echo "  make update       Baja la última imagen de GHCR y recrea el contenedor"
 	@echo "  make down         Detiene el contenedor"
 	@echo "  make restart      Reinicia el contenedor"
-	@echo "  make rebuild      Reconstruye la imagen y levanta"
+	@echo "  make rebuild      Construye la imagen en local (desde el código) y levanta"
 	@echo "  make logs         Muestra logs en vivo"
 	@echo "  make clean        Detiene y elimina volúmenes de datos (borra jobs)"
 	@echo ""
@@ -57,6 +58,13 @@ up: check
 	@echo ""
 	@echo "OK: photonne-tools levantado."
 
+update: check
+	docker compose pull
+	docker compose up -d
+	@echo ""
+	@echo "OK: photonne-tools actualizado a la última imagen de GHCR."
+	@echo "-> Si el navegador muestra el diseño viejo, recarga con Cmd/Ctrl+Shift+R."
+
 down:
 	docker compose down
 
@@ -64,7 +72,7 @@ restart:
 	docker compose restart
 
 rebuild: check
-	docker compose up -d --build
+	docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
 
 logs:
 	docker compose logs -f photonne-tools
